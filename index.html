@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://unpkg.com/konva@7.1.3/konva.min.js"></script>
+    <meta charset="utf-8" />
+    <title>I dunno what am doin'</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+        background-image: url(./back.png);
+      }
+      h1 {
+        position: absolute;
+        left: 40vw;
+        display: none;
+      }
+      button {
+        position: absolute;
+        left: 45vw;
+        top: 70vh;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Game Over</h1>
+    <button><h2>Play Game</h2></button>
+    <div id="container"></div>
+    <script>
+      var btn = document.querySelector("button");
+      var gameOver = document.querySelector("h1");
+      var cntnr = document.querySelector("#container");
+
+      btn.onclick = function () {
+        runGame(0, 5);
+      };
+
+      function runGame(s, l) {
+        btn.style.display = "none";
+        cntnr.style.cursor = "none";
+        function getRandomInt(min, max) {
+          min = Math.ceil(min);
+          max = Math.floor(max);
+          return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+        }
+        var score = s;
+        var live = l;
+        function writeScore(message) {
+          text.text(message + score);
+          layer.draw();
+        }
+
+        function writeLive(message) {
+          text2.text(message + live);
+          layer.draw();
+        }
+
+        function loadImages(sources, callback) {
+          var images = {};
+          var loadedImages = 0;
+          var numImages = 0;
+          for (var src in sources) {
+            numImages++;
+          }
+          for (var src in sources) {
+            images[src] = new Image();
+            images[src].onload = function () {
+              if (++loadedImages >= numImages) {
+                callback(images);
+              }
+            };
+            images[src].src = sources[src];
+          }
+        }
+        function buildStage(images) {
+          var target = new Konva.Image({
+            image: images.target,
+            x: window.innerWidth / 2,
+            y: window.innerHeight / 2,
+            height: 50,
+            width: 50,
+          });
+
+          var baloon = new Konva.Image({
+            image: images.baloon,
+            x: 280,
+            y: 30,
+            height: 350,
+            width: 100,
+          });
+
+          var oldscore = -1;
+
+          baloon.on("click", function () {
+            score += 1;
+            writeScore("Score: ");
+          });
+
+          baloon.cache();
+          baloon.drawHitFromCache();
+          target.cache();
+          target.drawHitFromCache();
+
+          var amplitude = 550;
+          var period = getRandomInt(3000, 5000);
+          // in ms
+          var centerY = stage.height() / 4;
+          var moveX = getRandomInt(0, window.innerWidth - 200);
+
+          var anim = new Konva.Animation(function (frame) {
+            var moveY =
+              amplitude * Math.sin((frame.time * Math.PI) / period) + centerY;
+            function recreate() {
+              anim.stop();
+              frame.time = 1500;
+              moveX = getRandomInt(0, window.innerWidth - 200);
+              period = getRandomInt(2000, 5000);
+              anim.start();
+            }
+            if (oldscore + 1 != score) {
+              oldscore += 1;
+              recreate();
+            }
+
+            baloon.y(moveY);
+            baloon.x(moveX);
+
+            if (moveY < -100) {
+              live -= 1;
+              if (live <= 0) {
+                stage.destroy();
+                gameOver.style.display = "block";
+              }
+              writeLive("Live : ");
+              recreate();
+            }
+          }, layer);
+
+          anim.start();
+
+          layer.add(baloon);
+          layer.add(target);
+          layer.add(text);
+          layer.add(text2);
+          stage.add(layer);
+        }
+        var stage = new Konva.Stage({
+          container: "container",
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+
+        stage.on("mousemove", function (e) {
+          var a = stage.children[0].children[1];
+          a.y(e.evt.pageY - 22);
+          a.x(e.evt.pageX - 25);
+        });
+
+        var layer = new Konva.Layer();
+
+        var text = new Konva.Text({
+          x: 10,
+          y: 10,
+          fontFamily: "Calibri",
+          fontSize: 24,
+          text: "Score : 0",
+          fill: "black",
+        });
+
+        var text2 = new Konva.Text({
+          x: 10,
+          y: 40,
+          fontFamily: "Calibri",
+          fontSize: 24,
+          text: "Live : 5",
+          fill: "black",
+        });
+
+        var sources = {
+          target: "./target.png",
+          baloon: "./baloon.png",
+        };
+
+        loadImages(sources, buildStage);
+      }
+    </script>
+  </body>
+</html>
