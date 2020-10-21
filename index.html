@@ -10,9 +10,10 @@
         padding: 0;
         overflow: hidden;
         background: url(./src/back.png) no-repeat;
-        background-size: cover;
+        background-size: 100vw 100vh;
         position: relative;
       }
+
       h1 {
         position: absolute;
         left: 50vw;
@@ -20,7 +21,6 @@
         transform: translateX(-50%);
         text-shadow: 2px 2px brown;
         font-size: 4rem;
-        
       }
       button {
         position: absolute;
@@ -100,8 +100,17 @@
 
           oldscore = -1;
 
-          baloon.on("click", function () {
+          baloon.on("click", function (e) {
             score += 1;
+            text3.x(e.evt.pageX - text3.textWidth / 2);
+            text3.y(e.evt.pageY - text3.textHeight / 2);
+            writeScore("Score: ");
+          });
+
+          baloon.on("touchstart", function (e) {
+            score += 1;
+            text3.x(e.evt.touches[0].pageX - text3.textWidth / 2);
+            text3.y(e.evt.touches[0].pageY - text3.textHeight / 2);
             writeScore("Score: ");
           });
 
@@ -110,28 +119,29 @@
           target.cache();
           target.drawHitFromCache();
 
-          amplitude = 550;
-          period = getRandomInt(3000, 5000);
-          // in ms
-          centerY = stage.height() / 4;
+          amplitude = (window.innerHeight * 75) / 100;
+          period = getRandomInt(1000, 2000);
           moveX = getRandomInt(0, window.innerWidth - 200);
 
           anim = new Konva.Animation(function (frame) {
-            moveY =
-              amplitude * Math.sin((frame.time * Math.PI) / period) + centerY;
+            moveY = (-frame.time * amplitude) / period + amplitude;
             function recreate() {
               anim.stop();
-              frame.time = 1500;
-              period = getRandomInt(2000, 5000);
-              setTimeout(()=>{
+              frame.time = 0;
+              period = getRandomInt(500, 3500);
+              setTimeout(() => {
                 moveX = getRandomInt(0, window.innerWidth - 200);
                 anim.start();
-              }, 20)
-              
+              }, 20);
             }
             if (oldscore + 1 != score) {
               recreate();
               oldscore += 1;
+              setTimeout(() => {
+                text3.x(-100);
+                text3.y(-100);
+                layer.draw();
+              }, 500);
             }
 
             baloon.y(moveY);
@@ -149,6 +159,7 @@
               stage.destroy();
               cntnr.style.cursor = "pointer";
               btn.style.display = "block";
+              btn.firstElementChild.innerText = "Play Again";
               gameOver.style.display = "block";
             }
           }, layer);
@@ -159,6 +170,7 @@
           layer.add(target);
           layer.add(text);
           layer.add(text2);
+          layer.add(text3);
           stage.add(layer);
         }
         stage = new Konva.Stage({
@@ -173,24 +185,47 @@
           a.x(e.evt.pageX - 25);
         });
 
+        stage.on("touchstart", function (e) {
+          a = stage.children[0].children[1];
+          a.y(e.evt.touches[0].pageY - 22);
+          a.x(e.evt.touches[0].pageX - 25);
+          // console.log(e.evt.touches[0])
+        });
+
+        stage.on("touchmove", function (e) {
+          a = stage.children[0].children[1];
+          a.y(e.evt.touches[0].pageY - 22);
+          a.x(e.evt.touches[0].pageX - 25);
+          // console.log(e.evt.touches[0])
+        });
+
         layer = new Konva.Layer();
 
         text = new Konva.Text({
           x: 10,
           y: 10,
           fontFamily: "Calibri",
-          fontSize: 24,
+          fontSize: 36,
           text: `Score : ${score}`,
           fill: "black",
         });
 
         text2 = new Konva.Text({
           x: 10,
-          y: 40,
+          y: 60,
           fontFamily: "Calibri",
-          fontSize: 24,
+          fontSize: 36,
           text: `Live : ${live}`,
           fill: "black",
+        });
+
+        text3 = new Konva.Text({
+          x: -100,
+          y: -100,
+          fontFamily: "Calibri",
+          fontSize: 48,
+          text: `BOOM !`,
+          fill: "red",
         });
 
         sources = {
@@ -200,7 +235,6 @@
 
         loadImages(sources, buildStage);
       }
-      
     </script>
   </body>
 </html>
